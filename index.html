@@ -1,139 +1,257 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
 <title>Swift & Hawk — Agentenrätsel</title>
 <style>
-:root{--bg:#071022;--card:#0f2433;--accent:#12b3ff;--muted:#9fb6c8}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#02101a,#071022);color:#e8f6fb;padding:18px}
-.container{max-width:980px;margin:0 auto}
-.header{display:flex;gap:12px;align-items:center;margin-bottom:14px}
-.logo{width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7be3ff);display:flex;align-items:center;justify-content:center;color:#04202c;font-weight:900}
-.card{background:var(--card);padding:14px;border-radius:12px;margin-bottom:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
-.progress{display:flex;gap:8px;margin-bottom:10px}
-.dot{width:12px;height:12px;border-radius:99px;background:rgba(255,255,255,0.05)}
-.dot.done{background:#33d08a}
-.mission{display:none;padding:12px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:10px}
-input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
-button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#04202c;font-weight:700;cursor:pointer}
-.small{color:var(--muted);font-size:13px}
-.leaderboard-row{display:grid;grid-template-columns:1fr 80px 150px;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02)}
-.center{text-align:center}
-.hide{display:none}
+    body {
+        margin: 0;
+        font-family: Inter, Arial, sans-serif;
+        background: linear-gradient(108deg, #02101a, #02101a, #071022);
+        color: #86dcfb;
+        padding: 18px;
+    }
+    .container {
+        max-width: 900px;
+        margin: auto;
+    }
+    h1, h2, h3 {
+        color: #fff;
+    }
+    .card {
+        background: rgba(255,255,255,0.05);
+        padding: 16px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    input, button, select {
+        padding: 10px;
+        margin-top: 8px;
+        border-radius: 8px;
+        border: none;
+        width: 100%;
+    }
+    button {
+        cursor: pointer;
+        background: #1277ff;
+        color: white;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+    button:hover {
+        background: #0d5fd6;
+    }
+    .mission {
+        background: rgba(255,255,255,0.05);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        display: none;
+    }
+    .mission.done {
+        opacity: 0.4;
+    }
+    .mission input {
+        width: 70%;
+    }
+    #timer {
+        font-size: 20px;
+        font-weight: bold;
+        color: #6cfba1;
+    }
 </style>
 </head>
+
 <body>
 <div class="container">
-  <div class="header">
-    <div class="logo">S&H</div>
-    <div>
-      <h1>Swift & Hawk — Agentenrätsel (10 Missionen)</h1>
-      <div class="small">Niveau: 8. Klasse — Missionen schalten sich nacheinander frei. Name wird gespeichert. Online‑Bestenliste via Firebase möglich.</div>
-    </div>
-  </div>
 
-  <div class="card" id="loginCard">
+<h1>Swift & Hawk — Agentenrätsel (10 Missionen)</h1>
+
+<div class="card">
     <h2>Agenten-Login</h2>
+
     <p>Gib deinen Codenamen ein (wird im Browser gespeichert):</p>
-    <input id="agentName" placeholder="AgentinMila">
-    <div style="margin-top:8px">
-      <label><input type="checkbox" id="useFirebase"> Aktiv: Online-Bestenliste (Firebase, optional)</label>
-    </div>
-    <div style="margin-top:10px">
-      <button onclick="startRun()">Start Missionen</button>
-      <button onclick="clearName()" style="margin-left:8px;background:#e06f6f">Name löschen</button>
-    </div>
-    <p class="small">Tipp: Wenn du Firebase verwenden willst, ergänze die Datei firebase-config.js wie in README beschrieben.</p>
-  </div>
+    <input id="agentName" placeholder="Agentenname">
 
-  <div class="card hide" id="gameCard">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div><strong id="greet">Agent</strong></div>
-      <div class="small">Zeit: <span id="timer">00:00</span></div>
-    </div>
-    <div class="progress" id="dots"></div>
+    <label style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="useFirebase">
+        <span>Aktiv: Online-Bestenliste (Firebase, optional)</span>
+    </label>
 
-    <div id="missions"></div>
+    <button onclick="startRun()">Start Missionen</button>
+    <button style="background:#d63333" onclick="clearName()">Name löschen</button>
 
-    <div style="margin-top:12px" class="center">
-      <button id="finishBtn" class="hide" onclick="finishRun()">Alle Missionen geschafft — Ergebnis speichern</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Bestenliste</h2>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <button onclick="loadLeaderboard()">Aktualisieren</button>
-      <div class="small">Zeigt Name + Zeit (mm:ss). Online- und lokale Liste kombiniert.</div>
-    </div>
-    <div id="leaderboard"></div>
-  </div>
-
-  <div class="card small">
-    <strong>Assets & Datenschutz</strong>
-    <ul>
-      <li>Audio- und Bilddateien sind Platzhalter — du kannst eigene Dateien ersetzen (assets/).</li>
-      <li>Beim Online-Bestenliste werden nur Name + Zeit + Datum gespeichert. Keine persönlichen Daten.</li>
-    </ul>
-  </div>
+    <p style="font-size:13px; opacity:0.7;">
+        Tipp: Wenn du Firebase verwenden willst, ergänze die Datei <b>firebase-config.js</b> wie im README beschrieben.
+    </p>
 </div>
 
-<!-- audio placeholders -->
+<div class="card">
+    <h2>Bestenliste</h2>
+    <button onclick="loadLeaderboard()">Aktualisieren</button>
+    <div id="leaderboard"></div>
+</div>
+
+<div id="missions"></div>
+
+<div id="timer"></div>
+
+</div>
+
+<!-- Sounds -->
 <audio id="sound-ok" src="assets/ok.wav"></audio>
 <audio id="sound-wrong" src="assets/wrong.wav"></audio>
 <audio id="sound-complete" src="assets/complete.wav"></audio>
 
 <script>
-// Missions array
+
+// --- 10 MISSIONEN ---
 const missions = [
-  {id:1,title:'Caesar‑Chiffre', prompt:'Entschlüssele: "Mjqqt" (Verschiebung: 5).', hint:'Jeder Buchstabe wurde um +5 verschoben.', check:(a)=>a==='hello', dev:'hello'},
-  {id:2,title:'Zahlenfolge', prompt:'Welche Zahl kommt als nächstes? 2,4,8,16, ?', hint:'Muster: Verdopplung.', check:(a)=>a==='32', dev:'32'},
-  {id:3,title:'Akrostichon', prompt:'Erste Buchstaben: "Sicherheit Handelt Immer Nach Prinzipien" → Wort?', hint:'Nimm die Anfangsbuchstaben.', check:(a)=>a==='shin', dev:'shin'},
-  {id:4,title:'Binär zu Text', prompt:'Binär: 01100011 01101111 01100100 01100101', hint:'ASCII → kleingeschriebene Buchstaben.', check:(a)=>a==='code', dev:'code'},
-  {id:5,title:'Anagramm', prompt:'Aus "TISFW" ein englisches Wort bilden.', hint:'Es ist ein englisches, kurzes Wort.', check:(a)=>a==='swift', dev:'swift'},
-  {id:6,title:'Flächeninhalt', prompt:'Rechteck: Seiten 7 und 5. Flächeninhalt?', hint:'Länge × Breite', check:(a)=>a==='35', dev:'35'},
-  {id:7,title:'Silbenrätsel', prompt:'flink + Raubvogel = ? (zwei Silben zusammen)', hint:'Denke an den Buchtitel', check:(a)=>a==='swift', dev:'swift'},
-  {id:8,title:'Rätsel', prompt:'Ich habe Schlüssel, aber keine Tür. Was bin ich?', hint:'Sichert Informationen.', check:(a)=>a==='code', dev:'code'},
-  {id:9,title:'Morse', prompt:'Morse: "... --- ..." → Was bedeutet das?', hint:'Rettungsruf.', check:(a)=>a==='sos', dev:'sos'},
-  {id:10,title:'Final', prompt:'Setze die Codewörter 1–4 zusammen (mit Leerzeichen).', hint:'Wort1 Wort2 Wort3 Wort4', check:(a)=>a==='hello 32 shin code', dev:'hello 32 shin code'}
+    { id: 1, question: "Mission 1: Entschlüssele den Code: 12-5-20-20-5-18", answer: "letter" },
+    { id: 2, question: "Mission 2: Binär zu Text: 01000001", answer: "a" },
+    { id: 3, question: "Mission 3: Welches Wort passt nicht? Hund – Katze – Orange – Maus", answer: "orange" },
+    { id: 4, question: "Mission 4: 5 + (12 × 3) – 11 =", answer: "30" },
+    { id: 5, question: "Mission 5: Geheimfrage: Was ist die Hauptstadt von Österreich?", answer: "wien" },
+    { id: 6, question: "Mission 6: Sortiere die Buchstaben: K A T R E", answer: "karte" },
+    { id: 7, question: "Mission 7: Drehe das Wort um: TNEGA", answer: "agent" },
+    { id: 8, question: "Mission 8: Caesar-Chiffre +3: Jdqwhq", answer: "agenten" },
+    { id: 9, question: "Mission 9: Wie viele E’s sind in diesem Satz? 'Der geheime Server sei sehr sicher.'", answer: "8" },
+    { id: 10, question: "Mission 10: Letzte Aufgabe: 2 hoch 5 =", answer: "32" }
 ];
 
-let agent='', current=0, startTime=0, timerInterval=null, points=0;
+let current = 0;
+let startTime = 0;
+let timerInterval = null;
 
-function el(id){ return document.getElementById(id) }
-function secToStr(sec){ const mm=Math.floor(sec/60); const ss=sec%60; return String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0') }
-function play(id){ const s = document.getElementById(id); if(s) try{s.currentTime=0; s.play()}catch(e){} }
+// Helpers
+function el(id){ return document.getElementById(id); }
+function secToStr(sec){
+    const m = Math.floor(sec/60);
+    const s = sec % 60;
+    return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+function play(id){
+    const s = el("sound-"+id);
+    if(!s) return;
+    try { s.currentTime = 0; s.play(); } catch(e){}
+}
 
-function renderMissions(){ const container=el('missions'); container.innerHTML=''; missions.forEach((m,idx)=>{ const wrap=document.createElement('div'); wrap.className='mission'; wrap.id='m-'+m.id; wrap.innerHTML=`<h3>Mission ${m.id} — ${m.title}</h3><div class="small">${m.prompt}</div><div class="small" style="margin-top:6px">${m.hint}</div><input type="text" id="in-${m.id}" placeholder="Antwort eingeben"><div style="margin-top:8px"><button onclick="tryMission(${m.id})">Prüfen</button></div><div id="res-${m.id}" class="small" style="margin-top:6px"></div>`; container.appendChild(wrap) }); const dots=el('dots'); dots.innerHTML=''; for(let i=0;i<missions.length;i++){ const d=document.createElement('div'); d.className='dot'; d.id='dot-'+(i+1); dots.appendChild(d) } updateUI() }
+function renderMissions(){
+    const container = el("missions");
+    container.innerHTML = "";
 
-function updateUI(){ missions.forEach((m,idx)=>{ const node=el('m-'+m.id); if(idx<=current) node.style.display='block'; else node.style.display='none'; const dot=el('dot-'+(idx+1)); if(idx<current) dot.classList.add('done'); else dot.classList.remove('done'); }); if(current>=missions.length) el('finishBtn').classList.remove('hide'); else el('finishBtn').classList.add('hide') }
+    missions.forEach((m, idx)=>{
+        const box = document.createElement("div");
+        box.className = "mission";
+        box.id = "m"+m.id;
+        box.innerHTML = `
+            <h3>Mission ${m.id}</h3>
+            <p>${m.question}</p>
+            <input id="inp-${m.id}" placeholder="Antwort eingeben…">
+            <button onclick="tryMission(${m.id})">Senden</button>
+        `;
+        container.appendChild(box);
+    });
+}
 
-function startTimer(){ startTime=Date.now(); timerInterval=setInterval(()=>{ const diff=Math.max(0,Date.now()-startTime); el('timer').innerText = secToStr(Math.floor(diff/1000)); },250) }
-function stopTimer(){ if(timerInterval) clearInterval(timerInterval); timerInterval=null }
+function saveName(){
+    const n = el("agentName").value.trim();
+    if(!n) return alert("Bitte Codenamen eingeben.");
+    localStorage.setItem("agentName", n);
+    return n;
+}
 
-function saveName(n){ localStorage.setItem('agentName', n) }
-function clearName(){ localStorage.removeItem('agentName'); alert('Name gelöscht'); location.reload() }
+function clearName(){
+    localStorage.removeItem("agentName");
+    alert("Name gelöscht.");
+    location.reload();
+}
 
-function startRun(){ const n = el('agentName').value.trim(); if(!n){ alert('Bitte Code‑Namen eingeben'); return } agent=n; saveName(agent); el('greet').innerText='Agent '+agent; el('loginCard').classList.add('hide'); el('gameCard').classList.remove('hide'); renderMissions(); startTimer() }
+function startRun(){
+    const name = saveName();
+    if(!name) return;
 
-function tryMission(id){ const m=missions.find(x=>x.id===id); const user=(el('in-'+id).value||'').toString().toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim(); const res=el('res-'+id); if(m.check(user)){ play('sound-ok'); res.innerHTML='<span style="color:#33d08a">✓ Richtig</span>'; points+=10; current=Math.max(current,id); if(id < missions.length) current = id; else current = missions.length; updateUI(); if(current>=missions.length){ stopTimer(); play('sound-complete'); el('finishBtn').classList.remove('hide') } } else { play('sound-wrong'); res.innerHTML='<span style="color:#ff9b9b'>Falsch — versuche es nochmal.</span>' } }
+    renderMissions();
+    current = 1;
+    showMission(1);
 
-function finishRun(){ stopTimer(); const timeText = el('timer').innerText; const parts = timeText.split(':'); const seconds = parseInt(parts[0])*60 + parseInt(parts[1]); const payload={name:agent, time:seconds, timeText:timeText, points:points, date:new Date().toISOString()}; if(window.FIREBASE_CONFIG && el('useFirebase').checked && typeof submitScoreOnline==='function'){ submitScoreOnline(payload).then(()=>{ alert('Ergebnis online gespeichert'); }).catch(e=>{ console.error(e); saveLocalScore(payload); alert('Fehler online — lokal gespeichert') }); } else { saveLocalScore(payload); alert('Ergebnis lokal gespeichert') } loadLeaderboard() }
+    startTime = Date.now();
+    startTimer();
+}
 
-function saveLocalScore(payload){ const key='sh_scores'; const arr = JSON.parse(localStorage.getItem(key)||'[]'); arr.push(payload); arr.sort((a,b)=>{ if(a.time!==b.time) return a.time-b.time; return b.points-a.points }); localStorage.setItem(key, JSON.stringify(arr.slice(0,100))) }
+function showMission(id){
+    missions.forEach(m=>{
+        el("m"+m.id).style.display = (m.id === id) ? "block" : "none";
+    });
+}
 
-async function loadLeaderboard(){ const container = el('leaderboard'); container.innerHTML=''; let online=[]; if(window.FIREBASE_CONFIG && el('useFirebase').checked && typeof fetchOnlineScores==='function'){ try{ online = await fetchOnlineScores() }catch(e){ console.warn('online load failed',e) } } const local = JSON.parse(localStorage.getItem('sh_scores')||'[]'); const merged = (online.concat(local)).slice(0,200); merged.sort((a,b)=>{ if(a.time!==b.time) return a.time-b.time; return b.points-a.points }); const top=merged.slice(0,20); if(top.length===0){ container.innerHTML='<div class="small">Noch keine Ergebnisse.</div>'; return } const head=document.createElement('div'); head.className='leaderboard-row'; head.innerHTML='<div class="lb-head">Name</div><div class="lb-head center">Zeit</div><div class="lb-head center">Datum</div>'; container.appendChild(head); top.forEach((s,idx)=>{ const row=document.createElement('div'); row.className='leaderboard-row'; row.innerHTML = `<div>${idx+1}. ${escapeHtml(s.name||'unbekannt')}</div><div class="center">${s.timeText||secToStr(s.time)}</div><div class="center small">${(new Date(s.date)).toLocaleString()}</div>`; container.appendChild(row) }) }
+function tryMission(id){
+    const m = missions.find(x=>x.id===id);
+    const user = el("inp-"+id).value.trim().toLowerCase();
+    if(user === m.answer){
+        play("ok");
+        el("m"+id).classList.add("done");
+        current++;
 
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])) }
-function secToStrSec(sec){ const mm=Math.floor(sec/60); const ss=sec%60; return String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0') }
+        if(current <= missions.length){
+            showMission(current);
+        } else {
+            finishRun();
+        }
+    } else {
+        play("wrong");
+        alert("Falsche Antwort!");
+    }
+}
 
-async function submitScoreOnline(payload){ if(!window.firebase) throw new Error('Firebase not loaded'); const db=firebase.firestore(); await db.collection('scores').add(payload) }
-async function fetchOnlineScores(){ if(!window.firebase) throw new Error('Firebase not loaded'); const db=firebase.firestore(); const snap=await db.collection('scores').orderBy('time','asc').limit(100).get(); const out=[]; snap.forEach(d=>out.push(d.data())); return out }
+function startTimer(){
+    timerInterval = setInterval(()=>{
+        const now = Date.now();
+        const diff = Math.floor((now - startTime)/1000);
+        el("timer").innerText = "Zeit: " + secToStr(diff);
+    }, 250);
+}
 
-(function(){ if(window.FIREBASE_CONFIG){ const s1=document.createElement('script'); s1.src='https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js'; document.head.appendChild(s1); const s2=document.createElement('script'); s2.src='https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js'; document.head.appendChild(s2); s2.onload = ()=>{ try{ firebase.initializeApp(window.FIREBASE_CONFIG); console.log('Firebase ready') }catch(e){console.error(e)} } } })();
+function finishRun(){
+    clearInterval(timerInterval);
+    play("complete");
 
-window.addEventListener('load', ()=>{ const n = localStorage.getItem('agentName'); if(n) el('agentName').value = n; renderMissions(); loadLeaderboard() });
+    const totalSec = Math.floor((Date.now() - startTime)/1000);
+    const name = localStorage.getItem("agentName");
+    saveLocalScore({ name, time: totalSec });
+
+    alert("Missionen abgeschlossen! Zeit: "+secToStr(totalSec));
+}
+
+// Lokale Bestenliste
+function saveLocalScore(entry){
+    const list = JSON.parse(localStorage.getItem("scores") || "[]");
+    list.push(entry);
+    list.sort((a,b)=>a.time-b.time);
+    localStorage.setItem("scores", JSON.stringify(list));
+}
+
+function loadLeaderboard(){
+    const list = JSON.parse(localStorage.getItem("scores") || "[]");
+    const box = el("leaderboard");
+    box.innerHTML = "<h3>Lokale Bestzeiten</h3>";
+
+    list.slice(0,10).forEach((e,i)=>{
+        box.innerHTML += `<div>${i+1}. ${e.name} — ${secToStr(e.time)}</div>`;
+    });
+}
+
+// Firebase optional
+async function fetchOnlineScores(){ return []; }
+async function submitScoreOnline(){}
+
+// AUTO-INIT
+(function(){
+    const stored = localStorage.getItem("agentName");
+    if(stored) el("agentName").value = stored;
+})();
+
 </script>
 </body>
 </html>
